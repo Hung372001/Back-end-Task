@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1764432835195,
+      "tag": "0000_wild_la_nuit",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1764436918656,
+      "tag": "0001_easy_norman_osborn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764437276371,
+      "tag": "0002_empty_dragon_lord",
+      "breakpoints": true
+    }
+  ]
+}
