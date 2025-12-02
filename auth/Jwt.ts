@@ -3,7 +3,6 @@ import logger from "../utils/loogger";
 
 interface UserPayload {
     id: string;
-    email: string;
 }
 
 const secretKey:string = process.env.JWT_SECRET_KEY || 'your-very-secure-secret-key';
@@ -20,7 +19,6 @@ export const generateJwtToken = (user: UserPayload): string =>{
         const expiresIn = 60 * 60 * 8; // 1 hour
         const payload = {
             sub: user.id,
-            email: user.email,
             iat: issuedAt,
         };
 
@@ -38,7 +36,6 @@ export  const verifyJwtToken = (token: string): UserPayload | null => {
         const decoded = jwt.verify(token, secretKey) as jwt.JwtPayload;
         return {
             id: decoded.sub as string,
-            email: decoded.email as string,
         };
     } catch (error) {
         logger.error('JWT verification failed', {error});

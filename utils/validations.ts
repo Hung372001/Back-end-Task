@@ -8,7 +8,7 @@ const longRegex = /^-?([1-9]?[0-9]\.{1}\d{1,7}|1[0-7][0-9]\.{1}\d{1,7}|180\.0{1,
 
 // ======================== AUTH ========================
 export const loginPhoneSchema = z.object({
-    phone_number: z.string().regex(phoneRegex, 'Số điện thoại không hợp lệ'),
+    phone_number: z.string(),
 });
 
 export const verifyOtpSchema = z.object({
@@ -110,6 +110,15 @@ export const loginAdminSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
 });
+
+export const registerCustomerSchema = z.object({
+    phone: z.string(),
+})
+
+export const verifyCustomerOtpSchema = z.object({
+    phone: z.string(),
+    otp: z.string().length(6, 'OTP phải 6 số'),
+})
 // ======================== REUSABLE MIDDLEWARE ========================
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema } from 'zod';
