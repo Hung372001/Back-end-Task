@@ -112,7 +112,7 @@ export const loginAdminSchema = z.object({
 });
 
 export const registerCustomerSchema = z.object({
-    phone: z.string(),
+    code: z.string(),
 })
 
 export const verifyCustomerOtpSchema = z.object({
