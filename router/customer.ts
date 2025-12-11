@@ -5,10 +5,10 @@ import {login} from "../controller/admin";
 import {loginZalo, refreshZaloToken, UpdateCustomerProfile} from "../controller/customer";
 
 
-const router =  Router();
+const routerCustomer =  Router();
 
-router.post('/login-zalo',validate(registerCustomerSchema), requestLogger,loginZalo);
-router.post('/refresh-token',validate(registerCustomerSchema), requestLogger,refreshZaloToken);
-router.patch('update/:id', requestLogger,UpdateCustomerProfile);
+routerCustomer.post('/login-zalo',validate(registerCustomerSchema), requestLogger,loginZalo);
+routerCustomer.post('/refresh-token',validate(registerCustomerSchema), requestLogger,refreshZaloToken);
+routerCustomer.patch('update/:id', requestLogger,UpdateCustomerProfile);
 
-export default router;
+export default routerCustomer;

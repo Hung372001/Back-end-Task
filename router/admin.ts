@@ -4,13 +4,13 @@ import {loginAdminSchema, validate} from "../utils/validations";
 import {requestLogger} from "../auth/middleware/requestLogger";
 import {extractTokenMiddleware} from "../auth/middleware/extractTokenMiddleware";
 
-const router =  Router();
+const routerAdmin =  Router();
 
-router.post('/login',validate(loginAdminSchema), requestLogger,login);
-router.get('/profile', requestLogger,extractTokenMiddleware,getProfile);
+routerAdmin.post('/login',validate(loginAdminSchema), requestLogger,login);
+routerAdmin.get('/profile', requestLogger,extractTokenMiddleware,getProfile);
 
-router.get('/customers',requestLogger,extractTokenMiddleware, getCustomers);
-router.get('/customers/:id',requestLogger,extractTokenMiddleware, getCustomerById);
-router.patch('/customers/banned/:id',requestLogger,extractTokenMiddleware, bannerCustomer);
-export default router;
+routerAdmin.get('/customers',requestLogger,extractTokenMiddleware, getCustomers);
+routerAdmin.get('/customers/:id',requestLogger,extractTokenMiddleware, getCustomerById);
+routerAdmin.patch('/customers/banned/:id',requestLogger,extractTokenMiddleware, bannerCustomer);
 
+export default routerAdmin;
