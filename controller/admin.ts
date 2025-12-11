@@ -7,6 +7,8 @@ import bcrypt from "bcrypt";
 import {generateJwtToken} from "../auth/Jwt";
 import {RequestWithToken} from "../types/admin";
 import {asc, count, desc} from "drizzle-orm";
+import { get } from 'http';
+import { findUserById } from '../services/customer';
 
 export const login = async (req: Request, res: Response) => {
     const log = logger.child('login admin');
@@ -63,7 +65,7 @@ export const getProfile = async (req: RequestWithToken, res: Response) => {
     }
 }
 
-
+/// get customers with pagination, sorting, searching
 export const getCustomers = async (req: RequestWithToken, res: Response) => {
     try {
         const {page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', search=''} = req.query;
@@ -111,3 +113,45 @@ export const getCustomers = async (req: RequestWithToken, res: Response) => {
         res.status(500).json({message: 'Internal server error'});
     }
 }
+
+export const getCustomerById = async (req: RequestWithToken, res: Response) => {
+    try {
+
+        const customerId = Number(req.params.id);
+        const data = await findUserById(customerId);
+
+        if (!data) {
+             res.status(404).json({message: 'Customer not found'});
+        }
+
+        res.status(200).json({data});
+
+    }catch (err) {
+        logger.error(`Error in get customer by id ${err}`);
+        res.status(500).json({message: 'Internal server error'});
+    }
+}
+
+export const bannerCustomer = async (req: RequestWithToken, res: Response) => {
+    try {
+        const customerId = Number(req.params.id);
+
+        const data = await findUserById(customerId);
+
+        if (!data) {
+            return res.status(404).json({message: 'Customer not found'});
+        }
+
+        const [bannerReason] = await db.update (usersCustomer)
+            .set({ status: 0 })
+            .where(eq(usersCustomer.id, customerId))
+            .returning();
+
+        // Implement banner logic here
+
+        res.status(200).json({message: `Customer with ID ${customerId} has been banned.`,});
+    } catch (err) {
+        logger.error(`Error in banner customer ${err}`);
+        res.status(500).json({message: 'Internal server error'});
+    }
+};    

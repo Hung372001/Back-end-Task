@@ -1,9 +1,10 @@
 import {
     pgTable, bigint, varchar, text, decimal, timestamp,
     date, jsonb, unique, index,
-    time, integer, smallint, serial
+    time, integer, smallint, boolean
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+
+
 
 // 1. users_customer
 export const usersCustomer = pgTable('users_customer', {
@@ -13,6 +14,8 @@ export const usersCustomer = pgTable('users_customer', {
     fullName: varchar('full_name', { length: 100 }),
     defaultLat: decimal('default_lat', { precision: 10, scale: 7 }),
     defaultLong: decimal('default_long', { precision: 10, scale: 7 }),
+    status: integer('status').default(1),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({

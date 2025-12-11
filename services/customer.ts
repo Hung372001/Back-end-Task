@@ -13,6 +13,15 @@ export const  findUserByZaloId = async (zaloId: string) =>{
     return result[0] || null;
 }
 
+export const findUserById = async (id: number) =>{
+    const result =  await db
+        .select()
+        .from(usersCustomer)
+        .where(eq(usersCustomer.id, id));
+        
+    return result[0] || null;
+}
+
 export const createUserWithZalo = async (Customer:{
     zaloId: string,
     fullName: string,

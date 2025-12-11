@@ -22,6 +22,27 @@
       "when": 1764437276371,
       "tag": "0002_empty_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765441440113,
+      "tag": "0003_fine_doctor_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1765445542179,
+      "tag": "0004_clever_marvex",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1765446475785,
+      "tag": "0005_bitter_bushwacker",
+      "breakpoints": true
     }
   ]
 }
