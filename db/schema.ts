@@ -1,7 +1,7 @@
 import {
     pgTable, bigint, varchar, text, decimal, timestamp,
     date, jsonb, unique, index,
-    time, integer, smallint, boolean
+    time, integer, smallint, boolean, serial
 } from 'drizzle-orm/pg-core';
 
 
@@ -79,10 +79,13 @@ export const admins = pgTable('admins', {
 
 // 4. system_settings
 export const systemSettings = pgTable('system_settings', {
-    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
     key: varchar('key', { length: 100 }).notNull().unique(),
-    value: varchar('value', { length: 255 }),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    value: text('value').notNull(),
+    group: varchar('group', { length: 50 }).notNull(),
+    description: text('description'),
+    type: varchar('type', { length: 20 }).default('string'),
+    updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 // 5. jobs
@@ -90,7 +93,7 @@ export const jobs = pgTable('jobs', {
     id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
     customerId: bigint('customer_id', { mode: 'number' }).notNull().references(() => usersCustomer.id, { onDelete: 'cascade' }),
 
-    jobType: varchar('job_type', { length: 20 }).$type<'boc_vac' | 'don_dep' | 'chuyen_nha' | 'viec_vat'>().notNull(),
+    jobType: varchar('job_type', { length: 20 }).notNull(),
 
     descriptionText: varchar('description_text', { length: 255 }),
     descriptionVoiceUrl: varchar('description_voice_url', { length: 255 }),

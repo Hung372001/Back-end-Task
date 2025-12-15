@@ -119,6 +119,48 @@ export const verifyCustomerOtpSchema = z.object({
     phone: z.string(),
     otp: z.string().length(6, 'OTP phải 6 số'),
 })
+// ======================== DTOs ========================
+
+export const CreateJobSchema = z.object({
+    jobType:z.string().min(3).max(50), // [cite: 68]
+    descriptionText: z.string().max(255).optional(), // [cite: 70]
+    descriptionVoiceUrl: z.string().url().optional(), // [cite: 71]
+
+    workerQuantity: z.number().int().min(1).default(1), // [cite: 73]
+
+    // Vị trí
+    bookingLat: z.number().min(-90).max(90), // [cite: 74]
+    bookingLong: z.number().min(-180).max(180), // [cite: 75]
+    bookingAddressText: z.string(), // [cite: 76]
+
+    // Thời gian
+    scheduledStartTime: z.string().datetime().nullable().optional(), // Null = JobNow [cite: 78]
+    estimatedHours: z.number().min(0.5).max(8), // [cite: 79]
+
+    // Thanh toán
+    paymentMethod: z.enum(['cash', 'transfer', 'other']).default('cash'), // [cite: 87]
+});
+
+export const GetJobsQuerySchema = z.object({
+    // Phân trang
+    page: z.coerce.number().min(1).default(1),    // Tự ép kiểu string -> number
+    limit: z.coerce.number().min(1).max(100).default(10),
+
+    // Bộ lọc (Optional)
+    status: z.enum(['searching', 'locked', 'in_progress', 'completed', 'cancelled']).optional(),
+    jobType: z.enum(['boc_vac', 'don_dep', 'chuyen_nha', 'viec_vat']).optional(),
+
+    // Tìm kiếm
+    search: z.string().optional(), // Tìm theo description hoặc địa chỉ
+
+    // Sắp xếp
+    sortBy: z.enum(['newest', 'oldest', 'price_high', 'price_low']).default('newest'),
+});
+
+export type GetJobsQueryDto = z.infer<typeof GetJobsQuerySchema>;
+export type CreateJobDto = z.infer<typeof CreateJobSchema>;
+
+
 // ======================== REUSABLE MIDDLEWARE ========================
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema } from 'zod';

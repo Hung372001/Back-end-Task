@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  api-server:
+    container_name: backend-app
+    build: .
+    ports:
+      - "8000:8000" # Map port 8080 của VPS vào port 3000 của Container
+    restart: always
+    environment:
+      - NODE_ENV=production
+    # Bỏ comment dòng dưới nếu bạn muốn dùng file .env
+    # env_file:
+    #   - .env

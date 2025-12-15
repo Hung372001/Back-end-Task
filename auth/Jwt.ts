@@ -22,7 +22,7 @@ export const generateJwtToken = (user: UserPayload): string =>{
             iat: issuedAt,
         };
 
-        return jwt.sign(payload, secretKey, {header: header, expiresIn: "8h"});
+        return jwt.sign(payload, secretKey, {header: header, expiresIn: "1y"});
     }catch (error) {
         logger.error('Error generating JWT token', {error});
         throw error;
