@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import {verifyJwtToken} from "../Jwt";
 import {RequestWithToken} from "../../types/admin";
+import {Parser} from "date-fns/parse/_lib/Parser";
 
 
 export const extractTokenMiddleware = (req: RequestWithToken, res: Response, next: NextFunction) => {
@@ -18,7 +19,7 @@ export const extractTokenMiddleware = (req: RequestWithToken, res: Response, nex
             return res.status(401).json({ message: 'Invalid or expired token' });
         }
 
-        req.adminId = verifiedToken.id;
+        req.adminId =  parseInt(verifiedToken.id);
 
         next();
     } else {

@@ -8,5 +8,5 @@ export type TypeAdmin = {
     createdAt: Date;
 }
 export interface RequestWithToken extends Request {
-    adminId?:  string;
+    adminId?:  number;
 }
