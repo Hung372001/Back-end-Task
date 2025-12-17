@@ -16,9 +16,9 @@ import {createUserWithZalo, findOrCreateZaloUser, findUserByZaloId, refreshAcces
 export  const loginZalo = async (req:Request, res:Response) => {
     try {
 
-        const {code } = req.body;
+        const {access_token } = req.body;
 
-        if(!code){
+        if(!access_token){
             return res.status(400).json({message: 'Code is required'});
         }
 
@@ -26,23 +26,9 @@ export  const loginZalo = async (req:Request, res:Response) => {
         const redirectUri = process.env.ZALO_REDIRECT_URI;
 
 
-        const params = new URLSearchParams();
-        params.append('app_id', process.env.ZALO_APP_ID!);
-        params.append('grant_type', 'authorization_code');
-        params.append('code', code);
-
-
-        const tokenResponse = await axios.post(`https://oauth.zaloapp.com/v4/access_token`,params, {
-
-            headers: {
-                "Content-Type":"application/x-www-form-urlencoded",
-                "secret_key":zaloAppSecret
-            }
-        });
 
 
 
-        const { access_token, refresh_token, expires_in } = tokenResponse.data;
 
         const userInfoResponse = await axios.get('https://graph.zalo.me/v2.0/me', {
             headers: {
