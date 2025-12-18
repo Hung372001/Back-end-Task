@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import { loginAdminSchema, registerCustomerSchema, validate } from "../utils/validations";
 import { requestLogger } from "../auth/middleware/requestLogger";
@@ -99,25 +100,25 @@ routerCustomer.patch('/update/:id', requestLogger, UpdateCustomerProfile);
  *             properties:
  *               label:
  *                 type: string
- *                 description: Nhãn địa chỉ (vd: "Nhà", "Công ty")
+ *                 description: 'Nhãn địa chỉ (ví dụ: "Nhà", "Công ty")'
  *               addressText:
  *                 type: string
- *                 description: Địa chỉ chi tiết
+ *                 description: 'Địa chỉ chi tiết'
  *               lat:
  *                 type: number
  *                 format: float
- *                 description: Vĩ độ
+ *                 description: 'Vĩ độ'
  *               long:
  *                 type: number
  *                 format: float
- *                 description: Kinh độ
+ *                 description: 'Kinh độ'
  *               isDefault:
  *                 type: boolean
- *                 description: Đặt làm địa chỉ mặc định
+ *                 description: 'Đặt làm địa chỉ mặc định'
  *                 default: false
  *     responses:
  *       200:
- *         description: Tạo địa chỉ thành công
+ *         description: 'Tạo địa chỉ thành công'
  *         content:
  *           application/json:
  *             schema:
@@ -128,11 +129,11 @@ routerCustomer.patch('/update/:id', requestLogger, UpdateCustomerProfile);
  *                 data:
  *                   $ref: '#/components/schemas/CustomerAddress'
  *       401:
- *         description: Unauthorized - Thiếu thông tin xác thực
+ *         description: 'Unauthorized - Thiếu thông tin xác thực'
  *       400:
- *         description: Bad Request - Dữ liệu không hợp lệ
+ *         description: 'Bad Request - Dữ liệu không hợp lệ'
  */
-routerCustomer.post('/addresses', requestLogger, extractTokenMiddleware,controller.create);
+routerCustomer.post('/addresses', requestLogger, extractTokenMiddleware, controller.create);
 
 /**
  * @swagger
@@ -144,7 +145,7 @@ routerCustomer.post('/addresses', requestLogger, extractTokenMiddleware,controll
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Danh sách địa chỉ
+ *         description: 'Danh sách địa chỉ'
  *         content:
  *           application/json:
  *             schema:
@@ -157,9 +158,10 @@ routerCustomer.post('/addresses', requestLogger, extractTokenMiddleware,controll
  *                   items:
  *                     $ref: '#/components/schemas/CustomerAddress'
  *       401:
- *         description: Unauthorized - Thiếu thông tin xác thực
+ *         description: 'Unauthorized - Thiếu thông tin xác thực'
  */
-routerCustomer.get('/addresses', requestLogger, extractTokenMiddleware,controller.list);
+routerCustomer.get('/addresses', requestLogger, extractTokenMiddleware, controller.list);
+
 /**
  * @swagger
  * /customer/addresses/{id}:
@@ -174,10 +176,10 @@ routerCustomer.get('/addresses', requestLogger, extractTokenMiddleware,controlle
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID của địa chỉ cần xóa
+ *         description: 'ID của địa chỉ cần xóa'
  *     responses:
  *       200:
- *         description: Xóa địa chỉ thành công
+ *         description: 'Xóa địa chỉ thành công'
  *         content:
  *           application/json:
  *             schema:
@@ -188,11 +190,11 @@ routerCustomer.get('/addresses', requestLogger, extractTokenMiddleware,controlle
  *                 message:
  *                   type: string
  *       401:
- *         description: Unauthorized - Thiếu thông tin xác thực
+ *         description: 'Unauthorized - Thiếu thông tin xác thực'
  *       404:
- *         description: Địa chỉ không tồn tại hoặc không thuộc về khách hàng
+ *         description: 'Địa chỉ không tồn tại hoặc không thuộc về khách hàng'
  */
-routerCustomer.delete('/addresses/:id', requestLogger, extractTokenMiddleware,controller.delete);
+routerCustomer.delete('/addresses/:id', requestLogger, extractTokenMiddleware, controller.delete);
 
 /**
  * @swagger
@@ -208,25 +210,25 @@ routerCustomer.delete('/addresses/:id', requestLogger, extractTokenMiddleware,co
  *       properties:
  *         id:
  *           type: integer
- *           description: ID của địa chỉ
+ *           description: 'ID của địa chỉ'
  *         customerId:
  *           type: integer
- *           description: ID của khách hàng
+ *           description: 'ID của khách hàng'
  *         label:
  *           type: string
- *           description: Nhãn địa chỉ
+ *           description: 'Nhãn địa chỉ'
  *         addressText:
  *           type: string
- *           description: Địa chỉ chi tiết
+ *           description: 'Địa chỉ chi tiết'
  *         lat:
  *           type: string
- *           description: Vĩ độ
+ *           description: 'Vĩ độ'
  *         long:
  *           type: string
- *           description: Kinh độ
+ *           description: 'Kinh độ'
  *         isDefault:
  *           type: boolean
- *           description: Có phải địa chỉ mặc định không
+ *           description: 'Có phải địa chỉ mặc định không'
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -234,7 +236,5 @@ routerCustomer.delete('/addresses/:id', requestLogger, extractTokenMiddleware,co
  *           type: string
  *           format: date-time
  */
-
-
 
 export default routerCustomer;
