@@ -16,13 +16,12 @@ export const generateJwtToken = (user: UserPayload): string =>{
         };
 
         const issuedAt = Math.floor(Date.now() / 1000);
-        const expiresIn = 60 * 60 * 8; // 1 hour
         const payload = {
             sub: user.id,
             iat: issuedAt,
         };
 
-        return jwt.sign(payload, secretKey, {header: header, expiresIn: "1y"});
+        return jwt.sign(payload, secretKey, {header: header, expiresIn: "7d"});
     }catch (error) {
         logger.error('Error generating JWT token', {error});
         throw error;

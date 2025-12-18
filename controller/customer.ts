@@ -48,9 +48,13 @@ export  const loginZalo = async (req:Request, res:Response) => {
 
 
         const customer = await findOrCreateZaloUser(zaloUser);
-        console.log(customer)
 
-        const accessToken = generateJwtToken(zaloUser.zaloId)
+        const customerPayload = {
+            id: customer.id.toString()
+        };
+
+
+        const accessToken = generateJwtToken(customerPayload)
 
         res.status(200).json({message: 'Đăng Nhập Thành Công', accessToken, data: userInfo});
 

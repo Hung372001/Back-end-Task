@@ -72,4 +72,6 @@ router.get('/', requestLogger, extractTokenMiddleware, controller.findAll); // R
  */
 router.get('/:id', requestLogger, extractTokenMiddleware, controller.findById); // Removed duplicate requestLogger
 
+
+router.post('/:id/cancel',extractTokenMiddleware ,controller.cancel);
 export default router;

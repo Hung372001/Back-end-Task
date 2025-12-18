@@ -14,6 +14,8 @@ export const usersCustomer = pgTable('users_customer', {
     fullName: varchar('full_name', { length: 100 }),
     defaultLat: decimal('default_lat', { precision: 10, scale: 7 }),
     defaultLong: decimal('default_long', { precision: 10, scale: 7 }),
+    trustScore: decimal('trust_score', { precision: 3, scale: 2 }).default('5.00').notNull(),
+    trustLockedUntil: timestamp('trust_locked_until'),
     status: integer('status').default(1),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -109,7 +111,7 @@ export const jobs = pgTable('jobs', {
     priceEstimated: decimal('price_estimated', { precision: 12, scale: 2 }),
     finalPrice: decimal('final_price', { precision: 12, scale: 2 }),
 
-    status: varchar('status', { length: 20 }).$type<'searching' | 'locked' | 'in_progress' | 'completed' | 'cancelled'>().default('searching'),
+    status: varchar('status', { length: 20 }).$type<'searching' | 'locked' | 'in_progress' | 'completed' | 'cancelled'>().default('searching').notNull(),
 
     paymentMethod: varchar('payment_method', { length: 20 }).$type<'cash' | 'transfer' | 'other'>().default('cash'),
     paymentStatus: varchar('payment_status', { length: 20 }).$type<'unpaid' | 'paid' | 'refund'>().default('unpaid'),
@@ -126,7 +128,7 @@ export const jobAssignments = pgTable('job_assignments', {
     jobId: bigint('job_id', { mode: 'number' }).notNull().references(() => jobs.id, { onDelete: 'cascade' }),
     workerId: bigint('worker_id', { mode: 'number' }).notNull().references(() => usersWorker.id, { onDelete: 'cascade' }),
 
-    status: varchar('status', { length: 20 }).$type<'requested' | 'accepted' | 'arrived' | 'in_progress' | 'done' | 'cancelled'>().default('requested'),
+    status: varchar('status', { length: 20 }).$type<'requested' | 'accepted' | 'arrived' | 'in_progress' | 'done' | 'cancelled'>().default('requested').notNull(),
 
     acceptedAt: timestamp('accepted_at'),
     arrivedAt: timestamp('arrived_at'),
@@ -192,4 +194,21 @@ export const customerAddresses = pgTable('customer_addresses', {
     addressText: varchar('address_text', { length: 255 }),
     isDefault: smallint('is_default').default(0),
     createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const customer_trust_logs = pgTable('customer_trust_logs', {
+    id: serial('id').primaryKey(),
+    customerId: integer('customer_id').notNull().references(() => usersCustomer.id),
+    jobId: integer('job_id'), // Link tới job nếu biến động do job (có thể null)
+
+    // Loại hành động (để biết vì sao trừ/cộng)
+    actionType: varchar('action_type', { length: 50 }).notNull(),
+    // Ví dụ: 'JOB_COMPLETED', 'CANCEL_ASSIGNED', 'RATING_1_STAR', 'PENALTY_NO_SHOW'
+
+    changeAmount: decimal('change_amount', { precision: 3, scale: 2 }).notNull(), // +0.02, -0.15
+    oldScore: decimal('old_score', { precision: 3, scale: 2 }).notNull(),
+    newScore: decimal('new_score', { precision: 3, scale: 2 }).notNull(),
+
+    description: text('description'), // Ghi chú thêm
+    createdAt: timestamp('created_at').defaultNow(),
 });

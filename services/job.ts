@@ -3,12 +3,14 @@ import { addMinutes } from 'date-fns';
 import {CreateJobDto, GetJobsQueryDto} from "../utils/validations";
 import {SystemSettingsService} from "./systemSetting";
 import db from "../db";
-import {jobs, usersCustomer} from "../db/schema";
+import {jobAssignments, jobs, usersCustomer} from "../db/schema";
 import {and, eq, like, or} from "drizzle-orm/sql/expressions/conditions";
 import {asc, desc, sql} from "drizzle-orm";
+import {TRUST_CONFIG} from "../constants/trust-score.config";
+import {TrustScoreService} from "./trustScore";
 
 const settingsService = new SystemSettingsService();
-
+const trustService = new TrustScoreService();
 export class JobService {
 
     /**
@@ -178,5 +180,78 @@ export class JobService {
             .limit(1)
 
         return dataQuery[0] || null;
+    }
+
+    async cancelJob(jobId: number, customerId: number, reason: string) {
+        return await db.transaction(async (tx) => {
+            // 1. Tìm Job và lock dòng này để tránh race condition
+            // (Trong Drizzle chưa có native "FOR UPDATE" dễ dàng, ta check logic trước)
+            const [job] = await tx
+                .select()
+                .from(jobs)
+                .where(and(eq(jobs.id, jobId), eq(jobs.customerId, customerId))); // Check đúng chủ job
+
+            if (!job) {
+                throw new Error('Không tìm thấy đơn việc hoặc bạn không có quyền hủy.');
+            }
+
+            // 2. Validate Trạng thái [Cite Source: 319]
+            // Không cho hủy nếu đã hoàn thành hoặc đang làm
+            const invalidStatuses = ['in_progress', 'completed', 'cancelled'];
+            if (invalidStatuses.includes(job.status)) {
+                throw new Error(`Không thể hủy job khi đang ở trạng thái: ${job.status}`);
+            }
+
+            // 3. Logic tính phí phạt (TODO: Tích hợp Wallet Service sau này)
+            // Nếu job.status === 'locked' (đã có thợ), có thể trừ tiền cọc hoặc điểm uy tín
+            // if (job.status === 'locked') { ... deductFee() ... }
+            let penalty = 0;
+            let actionType = 'CANCEL_UNKNOWN';
+            switch (job.status) {
+                case 'searching': // Tương ứng Pending
+                    penalty = TRUST_CONFIG.PENALTY_CANCEL.PENDING; // -0.02
+                    actionType = 'CANCEL_PENDING';
+                    break;
+
+                case 'locked': // Tương ứng Assigned (Đã có thợ nhận)
+                    penalty = TRUST_CONFIG.PENALTY_CANCEL.ASSIGNED; // -0.07
+                    actionType = 'CANCEL_ASSIGNED';
+                    break;
+
+                case 'in_progress': // Tương ứng Working
+                    penalty = TRUST_CONFIG.PENALTY_CANCEL.WORKING; // -0.15
+                    actionType = 'CANCEL_WORKING';
+                    break;
+            }
+            // 4. Update bảng Jobs
+            await tx.update(jobs)
+                .set({
+                    status: 'cancelled',
+                    cancelReason: reason,
+                    updatedAt: new Date(),
+                })
+                .where(eq(jobs.id, jobId));
+
+            // 5. Giải phóng thợ (Update bảng Assignments)
+            // Chuyển trạng thái của tất cả thợ trong job này sang 'cancelled'
+
+            await tx.update(jobs).set({ status: 'cancelled', cancelReason: reason }).where(eq(jobs.id, jobId));
+            await tx.update(jobAssignments).set({ status: 'cancelled' }).where(eq(jobAssignments.jobId, jobId));
+
+            // 4. TRỪ ĐIỂM UY TÍN (Nếu có phạt)
+            if (penalty !== 0) {
+                // Lưu ý: penalty đang là số âm, ta cộng trực tiếp
+                await trustService.updateTrustScore(
+                    customerId,
+                    penalty,
+                    actionType,
+                    jobId,
+                    `Hủy job ở trạng thái ${job.status}`
+                );
+            }
+
+
+            return true;
+        });
     }
 }

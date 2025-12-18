@@ -112,7 +112,7 @@ export const loginAdminSchema = z.object({
 });
 
 export const registerCustomerSchema = z.object({
-    code: z.string(),
+    access_token: z.string(),
 })
 
 export const verifyCustomerOtpSchema = z.object({
@@ -156,11 +156,18 @@ export const GetJobsQuerySchema = z.object({
     // Sắp xếp
     sortBy: z.enum(['newest', 'oldest', 'price_high', 'price_low']).default('newest'),
 });
+export const CancelJobSchema = z.object({
+    reason: z.string()
+        .min(5, "Lý do hủy quá ngắn")
+        .max(255, "Lý do hủy quá dài"),
+});
 
 export type GetJobsQueryDto = z.infer<typeof GetJobsQuerySchema>;
 export type CreateJobDto = z.infer<typeof CreateJobSchema>;
 
 
+
+export type CancelJobDto = z.infer<typeof CancelJobSchema>;
 // ======================== REUSABLE MIDDLEWARE ========================
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema } from 'zod';
