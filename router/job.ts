@@ -72,6 +72,34 @@ router.get('/', requestLogger, extractTokenMiddleware, controller.findAll); // R
  */
 router.get('/:id', requestLogger, extractTokenMiddleware, controller.findById); // Removed duplicate requestLogger
 
+/**
+ * @swagger
+ * /:id/rate:
+ *   post:
+ *     summary: Đánh giá công việc
+ *     tags: [Jobs]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rating:
+ *                 type: string
+ *               comment:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Tạo thành công
+ */
+router.post('/:id/rate', extractTokenMiddleware, controller.rate);
 
 router.post('/:id/cancel',extractTokenMiddleware ,controller.cancel);
+
+
+router.post('/:id/accept', extractTokenMiddleware,controller.accept);
+
 export default router;

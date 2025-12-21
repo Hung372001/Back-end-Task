@@ -161,7 +161,22 @@ export const CancelJobSchema = z.object({
         .min(5, "Lý do hủy quá ngắn")
         .max(255, "Lý do hủy quá dài"),
 });
+export const GetWorkerJobsQuerySchema = z.object({
+    page: z.coerce.number().min(1).default(1),
+    limit: z.coerce.number().min(1).max(50).default(10),
 
+    // Filter theo nhóm trạng thái để tiện hiển thị Tab trên App
+    // 'active': Các job đang thực hiện (accepted, arrived, in_progress)
+    // 'history': Các job đã kết thúc (done, cancelled, completed)
+    // Nếu không truyền: Lấy tất cả
+    filter: z.enum(['active', 'history']).optional(),
+});
+export const RateJobSchema = z.object({
+    rating: z.number().int().min(1).max(5), // 1 đến 5 sao
+    comment: z.string().max(255).optional(),
+});
+
+export type GetWorkerJobsQueryDto = z.infer<typeof GetWorkerJobsQuerySchema>;
 export type GetJobsQueryDto = z.infer<typeof GetJobsQuerySchema>;
 export type CreateJobDto = z.infer<typeof CreateJobSchema>;
 

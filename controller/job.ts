@@ -1,7 +1,14 @@
 import { Request, Response } from 'express';
 import {JobService} from "../services/job";
-import {CancelJobSchema, CreateJobSchema, GetJobsQuerySchema} from "../utils/validations";
+import {
+    CancelJobSchema,
+    CreateJobSchema,
+    GetJobsQuerySchema,
+    GetWorkerJobsQuerySchema,
+    RateJobSchema
+} from "../utils/validations";
 import {RequestWithToken} from "../types/admin";
+import {getMyJobs} from "../services/worker";
 
 const jobService = new JobService();
 
@@ -140,6 +147,43 @@ export class JobController {
         }
     }
 
+    async rate(req: RequestWithToken, res: Response) {
+        try {
+            const jobId = parseInt(req.params.id);
+            const customerId = req.adminId;
+
+            if(!customerId) {
+                return res.status(401).json({ success: false, message: 'Unauthorized: Missing customer ID' });
+            }
+
+            // 1. Validate Body
+            const validation = RateJobSchema.safeParse(req.body);
+            if (!validation.success) {
+                return res.status(400).json({ success: false, errors: validation.error.format() });
+            }
+
+            if (isNaN(jobId)) {
+                return res.status(400).json({ success: false, message: 'ID Job không hợp lệ' });
+            }
+
+            // 2. Gọi Service
+            await jobService.rateWorker(jobId, customerId, validation.data.rating, validation.data.comment);
+
+            // 3. Trả về
+            return res.json({
+                success: true,
+                message: 'Cảm ơn bạn đã đánh giá công việc!'
+            });
+
+        } catch (error: any) {
+            console.error(error);
+            // Xử lý lỗi logic (ví dụ: chưa hoàn thành không được đánh giá)
+            if (error.message.includes('Không thể đánh giá') || error.message.includes('Không tìm thấy')) {
+                return res.status(400).json({ success: false, message: error.message });
+            }
+            return res.status(500).json({ success: false, message: 'Lỗi hệ thống khi đánh giá job' });
+        }
+    }
     // POST /api/jobs/estimate-price (API phụ để FE hiển thị giá trước khi bấm đặt)
     async estimatePrice(req: Request, res: Response) {
         try {
@@ -154,5 +198,67 @@ export class JobController {
         }
     }
 
+    async getMyJobs(req: Request, res: Response) {
+        try {
+            // TODO: Lấy ID từ Token (req.user.id)
+            const workerId = 10;
 
+            // Validate Query
+            const validation = GetWorkerJobsQuerySchema.safeParse(req.query);
+            if (!validation.success) {
+                return res.status(400).json({ success: false, errors: validation.error.format() });
+            }
+
+            const result = await getMyJobs(workerId, validation.data);
+
+            res.json({
+                success: true,
+                message: 'Lấy danh sách việc thành công',
+                data: result.data,
+                pagination: result.pagination
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: 'Lỗi hệ thống' });
+        }
+    }
+
+    async accept(req: RequestWithToken, res: Response) {
+        try {
+            const jobId = parseInt(req.params.id);
+
+            // TODO: Lấy workerId từ JWT Token (req.user.id)
+            const workerId = req.adminId;
+
+            if(!workerId){
+                return res.status(401).json({success: false, message: 'Unauthorized: Missing worker ID'});
+            }
+
+
+            if (isNaN(jobId)) {
+                return res.status(400).json({success: false, message: 'ID Job không hợp lệ'});
+            }
+
+            // Gọi service (đã bao gồm transaction bên trong)
+            const result = await jobService.acceptJob(jobId, workerId);
+
+            return res.json({
+                success: true,
+                message: result.message
+            });
+
+        } catch (error: any) {
+            console.error('Accept Job Error:', error);
+
+            // Xử lý các lỗi nghiệp vụ cụ thể để trả về message thân thiện
+            if (error.message.includes('đã đủ người') || error.message.includes('đã nhận')) {
+                return res.status(409).json({success: false, message: error.message}); // 409 Conflict
+            }
+
+            return res.status(500).json({
+                success: false,
+                message: 'Lỗi hệ thống khi nhận việc.'
+            });
+        }
+    }
 }

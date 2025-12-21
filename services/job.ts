@@ -3,7 +3,7 @@ import { addMinutes } from 'date-fns';
 import {CreateJobDto, GetJobsQueryDto} from "../utils/validations";
 import {SystemSettingsService} from "./systemSetting";
 import db from "../db";
-import {jobAssignments, jobs, usersCustomer} from "../db/schema";
+import {jobAssignments, jobs, usersCustomer, usersWorker} from "../db/schema";
 import {and, eq, like, or} from "drizzle-orm/sql/expressions/conditions";
 import {asc, desc, sql} from "drizzle-orm";
 import {TRUST_CONFIG} from "../constants/trust-score.config";
@@ -252,6 +252,129 @@ export class JobService {
 
 
             return true;
+        });
+    }
+
+// Thêm vào JobService
+    async rateWorker(jobId: number, customerId: number, rating: number, comment?: string) {
+        return await db.transaction(async (tx) => {
+            // 1. Validate: Job phải là của khách này và trạng thái phải là COMPLETED
+            const [job] = await tx
+                .select()
+                .from(jobs)
+                .leftJoin(jobAssignments, eq(jobs.id, jobAssignments.jobId))
+                .where(and(eq(jobs.id, jobId), eq(jobs.customerId, customerId)));
+
+            if (!job || job.jobs.status !== 'completed') {
+                throw new Error('Job chưa hoàn thành hoặc không tồn tại.');
+            }
+
+            const workerId = job.job_assignments?.workerId;
+            if (!workerId) throw new Error('Không tìm thấy thợ để đánh giá.');
+
+            // 2. Lưu đánh giá (Có thể tạo bảng reviews riêng, ở đây ta update vào assignment cho gọn MVP)
+            // Giả sử bảng job_assignments có cột rating, comment (cần thêm vào schema nếu chưa có)
+            /* await tx.update(job_assignments).set({ rating, comment })...
+            */
+
+            // 3. Tính lại điểm trung bình cho thợ (Rating Avg) [cite: 45]
+            // Công thức: NewAvg = ((OldAvg * Count) + NewRate) / (Count + 1)
+            const [worker] = await tx.select().from(usersWorker).where(eq(usersWorker.id, workerId));
+
+            const currentAvg = parseFloat(worker.ratingAvg || '5.0');
+            const currentCount = worker.ratingCount || 0;
+
+            const newCount = currentCount + 1;
+            const newAvg = ((currentAvg * currentCount) + rating) / newCount;
+
+            await tx.update(usersWorker)
+                .set({
+                    ratingAvg: newAvg.toFixed(1), // Lưu 1 số lẻ (4.5)
+                    ratingCount: newCount
+                })
+                .where(eq(usersWorker.id, workerId));
+
+            // 4. (Optional) Gọi TrustService để cộng điểm thưởng cho thợ
+            // if (rating === 5) await trustService.rewardWorker(workerId, ...);
+
+            return true;
+        });
+    }
+
+    async acceptJob(jobId: number, workerId: number) {
+        return await db.transaction(async (tx) => {
+            // 1. Lock Job Row: Ngăn các request khác đọc/sửa dòng này cùng lúc
+            // Drizzle hỗ trợ .for('update') để tạo câu lệnh SELECT ... FOR UPDATE
+            const [job] = await tx
+                .select()
+                .from(jobs)
+                .where(eq(jobs.id, jobId))
+                .for('update'); // QUAN TRỌNG: Lock dòng này
+
+            if (!job) {
+                throw new Error('Công việc không tồn tại.');
+            }
+
+            // 2. Validate trạng thái Job
+            if (job.status !== 'searching') {
+                throw new Error('Công việc này đã đủ người hoặc đã bị hủy.');
+            }
+
+            // 3. Kiểm tra xem thợ này đã nhận job này chưa (Idempotency)
+            const existingAssignment = await tx
+                .select()
+                .from(jobAssignments)
+                .where(and(
+                    eq(jobAssignments.jobId, jobId),
+                    eq(jobAssignments.workerId, workerId)
+                ));
+
+            if (existingAssignment.length > 0) {
+                throw new Error('Bạn đã nhận công việc này rồi.');
+            }
+
+            // 4. Đếm số lượng thợ hiện tại đang tham gia job [cite: 247]
+            // Đếm các status hợp lệ: accepted, arrived, in_progress, done
+            const assignments = await tx
+                .select({count: sql<number>`count(*)`})
+                .from(jobAssignments)
+                .where(and(
+                    eq(jobAssignments.jobId, jobId),
+                    sql`${jobAssignments.status} IN ('accepted', 'arrived', 'in_progress', 'done')`
+                ));
+
+            const currentWorkerCount = Number(assignments[0]?.count || 0);
+
+
+            if(!job.workerQuantity){
+                throw new Error('Số lượng thợ cho công việc không hợp lệ.');
+            }
+            // 5. Kiểm tra Slot
+            if (currentWorkerCount >= job.workerQuantity) {
+                // Nếu đã đủ người (mà status vẫn searching -> do race condition) -> update lại status luôn
+                await tx.update(jobs).set({status: 'locked'}).where(eq(jobs.id, jobId));
+                throw new Error('Rất tiếc, công việc đã đủ người.');
+            }
+
+            // 6. Insert Assignment (Thợ nhận việc) [cite: 249-252]
+            await tx.insert(jobAssignments).values({
+                jobId: jobId,
+                workerId: workerId,
+                status: 'accepted',
+                acceptedAt: new Date(),
+                isLeader: currentWorkerCount === 0 ? 1 : 0, // Người đầu tiên là trưởng nhóm (optional logic)
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+
+            // 7. Check lại lần cuối: Nếu sau khi thêm thợ này mà đủ số lượng -> Lock Job
+            if (currentWorkerCount + 1 >= job.workerQuantity) {
+                await tx.update(jobs)
+                    .set({status: 'locked', updatedAt: new Date()})
+                    .where(eq(jobs.id, jobId));
+            }
+
+            return {success: true, message: 'Nhận việc thành công!'};
         });
     }
 }
