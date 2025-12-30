@@ -42,7 +42,7 @@ export  const loginZalo = async (req:Request, res:Response) => {
 
         const zaloUser = {
             zaloId: userInfo.id,
-            fullName: userInfo.name,
+            fullName: userInfo.name ? userInfo.name : '',
 
         };
 
