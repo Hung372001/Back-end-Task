@@ -32,7 +32,7 @@ export  const loginZalo = async (req:Request, res:Response) => {
 
         const userInfoResponse = await axios.get('https://graph.zalo.me/v2.0/me', {
             headers: {
-                access_token,
+                    access_token,
             }
         });
 

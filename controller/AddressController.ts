@@ -39,7 +39,7 @@ export class AddressController {
             addressText,
             lat: lat.toString(),
             long: long.toString(),
-            isDefault: isDefault || false,
+            isDefault: isDefault || 0,
         }).returning();
 
         res.json({ success: true, data: newItem });
