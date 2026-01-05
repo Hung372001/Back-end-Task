@@ -1,14 +1,18 @@
 import { Request, Response } from 'express';
 import {WorkerActionService} from "../services/worker-actions";
+import {RequestWithToken} from "../types/admin";
 const actionService = new WorkerActionService();
 
 export class WorkerActionController {
 
     // POST /api/worker/jobs/:id/arrive
-    async arrive(req: Request, res: Response) {
+    async arrive(req: RequestWithToken, res: Response) {
         try {
             const jobId = parseInt(req.params.id);
-            const workerId = 10; // TODO: req.user.id
+            const workerId = req.adminId; // TODO: req.user.id
+            if (!workerId) {
+                return res.status(401).json({ success: false, message: 'Unauthorized: Missing worker ID' });
+            }
             const { lat, long } = req.body;
 
             // Lấy file ảnh check-in (nếu có)
@@ -28,7 +32,10 @@ export class WorkerActionController {
     async start(req: Request, res: Response) {
         try {
             const jobId = parseInt(req.params.id);
-            const workerId = 10;
+            const workerId = req.adminId;
+            if (!workerId) {
+                return res.status(401).json({ success: false, message: 'Unauthorized: Missing worker ID' });
+            }
             await actionService.workerStart(workerId, jobId);
             res.json({ success: true, message: 'Bắt đầu làm việc' });
         } catch (e: any) {
@@ -40,7 +47,10 @@ export class WorkerActionController {
     async complete(req: Request, res: Response) {
         try {
             const jobId = parseInt(req.params.id);
-            const workerId = 10;
+            const workerId = req.adminId;
+            if (!workerId) {
+                return res.status(401).json({ success: false, message: 'Unauthorized: Missing worker ID' });
+            }
 
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
             const photo = files?.['photo']?.[0]?.buffer;
