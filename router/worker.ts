@@ -7,10 +7,14 @@ import {requestLogger} from "../auth/middleware/requestLogger";
 import {registerCustomerSchema, validate} from "../utils/validations";
 import {loginZalo} from "../controller/customer";
 import routerCustomer from "./customer";
+import {WorkerActionController} from "../controller/worker-actions";
 
 
 const router = Router();
+const actionController = new WorkerActionController();
 
+// Config upload 1 ảnh
+const uploadPhoto = upload.fields([{ name: 'photo', maxCount: 1 }]);
 // Định nghĩa các field file được phép upload
 const workerUploadFields = upload.fields([
     { name: 'cccdFront', maxCount: 1 },  // Ảnh mặt trước
@@ -242,5 +246,97 @@ router.get('/profile',requestLogger,extractTokenMiddleware, getWorkerProfile);
  *         description: Internal server error
  */
 router.get('/my-jobs',requestLogger,extractTokenMiddleware, getJobs);
+
+
+
+/**
+ * @swagger
+ * /api/worker/jobs/{id}/arrive:
+ *   post:
+ *     summary: Thợ báo đã đến nơi (Check-in GPS & Ảnh)
+ *     tags: [Worker Actions]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - lat
+ *               - long
+ *             properties:
+ *               lat:
+ *                 type: number
+ *                 example: 10.7769
+ *               long:
+ *                 type: number
+ *                 example: 106.7009
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh check-in tại địa điểm
+ *     responses:
+ *       200:
+ *         description: Check-in thành công
+ *       400:
+ *         description: Sai vị trí quá 150m hoặc lỗi khác
+ */
+router.post('/jobs/:id/arrive', uploadPhoto, actionController.arrive);
+
+/**
+ * @swagger
+ * /api/worker/jobs/{id}/start:
+ *   post:
+ *     summary: Thợ bấm bắt đầu làm việc
+ *     tags: [Worker Actions]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Trạng thái chuyển sang In Progress
+ */
+router.post('/jobs/:id/start', actionController.start);
+
+/**
+ * @swagger
+ * /api/worker/jobs/{id}/complete:
+ *   post:
+ *     summary: Thợ báo hoàn thành (Check-out & Ảnh)
+ *     tags: [Worker Actions]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: Ảnh kết quả công việc
+ *     responses:
+ *       200:
+ *         description: Hoàn thành. Nếu tất cả thợ xong, Job sẽ Completed.
+ */
+router.post('/jobs/:id/complete', uploadPhoto, actionController.complete);
 
 export default router;
