@@ -66,7 +66,7 @@ const workerUploadFields = upload.fields([
  *       500:
  *         description: Internal server error
  */
-routerCustomer.post('/login-zalo', requestLogger,validate(registerCustomerSchema), requestLogger, loginZalo);
+router.post('/login-zalo', requestLogger,validate(registerCustomerSchema), requestLogger, loginZalo);
 
 // Route Đăng ký (Có upload ảnh)
 /**

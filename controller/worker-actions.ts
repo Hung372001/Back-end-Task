@@ -29,7 +29,7 @@ export class WorkerActionController {
     }
 
     // POST /api/worker/jobs/:id/start
-    async start(req: Request, res: Response) {
+    async start(req: RequestWithToken, res: Response) {
         try {
             const jobId = parseInt(req.params.id);
             const workerId = req.adminId;
@@ -44,7 +44,7 @@ export class WorkerActionController {
     }
 
     // POST /api/worker/jobs/:id/complete
-    async complete(req: Request, res: Response) {
+    async complete(req: RequestWithToken, res: Response) {
         try {
             const jobId = parseInt(req.params.id);
             const workerId = req.adminId;
