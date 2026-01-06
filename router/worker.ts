@@ -31,7 +31,7 @@ const workerUploadFields = upload.fields([
 
 /**
  * @swagger
- * /worker/login:
+ * /worker/login-zalo:
  *   post:
  *     summary: Worker login with Zalo
  *     tags: [Worker]
@@ -67,6 +67,7 @@ const workerUploadFields = upload.fields([
  *         description: Internal server error
  */
 routerCustomer.post('/login-zalo', requestLogger,validate(registerCustomerSchema), requestLogger, loginZalo);
+
 // Route Đăng ký (Có upload ảnh)
 /**
  * @swagger

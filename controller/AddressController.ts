@@ -8,8 +8,11 @@ import {RequestWithToken} from "../types/admin";
 export class AddressController {
 
     // GET /api/customer/addresses
-    async list(req: Request, res: Response) {
-        const customerId = 1; // TODO: Lấy từ req.user.id
+    async list(req: RequestWithToken, res: Response) {
+        const customerId = req.adminId; // TODO: Lấy từ req.user.id
+        if (!customerId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Missing customer ID' });
+        }
         const list = await db
             .select()
             .from(customerAddresses)
