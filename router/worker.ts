@@ -5,7 +5,7 @@ import {} from "../controller/worker";
 import {extractTokenMiddleware} from "../auth/middleware/extractTokenMiddleware";
 import {requestLogger} from "../auth/middleware/requestLogger";
 import {registerCustomerSchema, validate} from "../utils/validations";
-import {loginZalo} from "../controller/customer";
+import {loginZalo} from "../controller/worker";
 import routerCustomer from "./customer";
 import {WorkerActionController} from "../controller/worker-actions";
 
