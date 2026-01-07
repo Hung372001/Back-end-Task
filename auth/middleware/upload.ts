@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Tạo thư mục uploads nếu chưa tồn tại
-const uploadDir = path.join(__dirname, '../../public/uploads');
+const uploadDir = path.join(__dirname, '../public/uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
