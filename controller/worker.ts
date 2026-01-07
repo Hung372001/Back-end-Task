@@ -9,6 +9,8 @@ import {usersWorker} from "../db/schema";
 import {RequestWithToken} from "../types/admin";
 import {eq} from "drizzle-orm/sql/expressions/conditions";
 import {GetWorkerJobsQuerySchema} from "../utils/validations";
+import fs from "fs";
+import path from "path";
 
 export const loginZalo = async (req: Request, res: Response) => {
     try {
@@ -56,10 +58,8 @@ export const loginZalo = async (req: Request, res: Response) => {
     }
 
 }
-
 export const registerWorker = async (req: RequestWithToken, res: Response) => {
     try {
-
         const workerId = req.adminId;
 
         if (!workerId) {
@@ -69,23 +69,51 @@ export const registerWorker = async (req: RequestWithToken, res: Response) => {
         const {fullName, phoneNumber, cccdNumber, gender, yob} = req.body;
 
         // Lấy file từ Multer
-        // req.files trả về object dictionary vì dùng upload.fields
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-        // Helper upload
-        const uploadFile = async (field: string) => {
-            if (files[field] && files[field][0]) {
-                return await uploadToCloudinary(files[field][0].buffer, 'miniapp/workers/cccd');
+        // Helper upload file lên máy chủ
+        const uploadFileLocal = async (field: string): Promise<string | null> => {
+            if (!files[field] || !files[field][0]) {
+                return null;
             }
-            return null;
+
+            const file = files[field][0];
+
+            // Tạo tên file duy nhất
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const extension = path.extname(file.originalname);
+            const filename = `${field}-${uniqueSuffix}${extension}`;
+
+            // Tạo đường dẫn thư mục (theo ngày tháng)
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const uploadDir = path.join(__dirname, '../../public/uploads/workers/cccd', year.toString(), month, day);
+
+            // Đảm bảo thư mục tồn tại
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+
+            // Đường dẫn đầy đủ của file
+            const filePath = path.join(uploadDir, filename);
+
+            // Ghi file
+            fs.writeFileSync(filePath, file.buffer);
+
+            // Trả về đường dẫn tương đối để lưu vào DB
+            return `/uploads/workers/cccd/${year}/${month}/${day}/${filename}`;
         };
 
-        // Upload song song cho nhanh
-        const [cccdFrontUrl, cccdBackUrl, avatarFaceUrl] = await Promise.all([uploadFile('cccdFront'), uploadFile('cccdBack'), uploadFile('avatarFace')]);
-
+        // Upload song song
+        const [cccdFrontUrl, cccdBackUrl, avatarFaceUrl] = await Promise.all([
+            uploadFileLocal('cccdFront'),
+            uploadFileLocal('cccdBack'),
+            uploadFileLocal('avatarFace')
+        ]);
 
         // Insert vào DB
-
         const updateWorker = await db.update(usersWorker).set({
             fullName: fullName,
             phoneNumber: phoneNumber,
@@ -100,16 +128,84 @@ export const registerWorker = async (req: RequestWithToken, res: Response) => {
             verifyStatus: 'approved'
         }).where(eq(usersWorker.id, workerId)).returning();
 
-
         res.status(201).json({
-            success: true, message: 'Update Success.', data: updateWorker
+            success: true,
+            message: 'Update Success.',
+            data: updateWorker
         });
 
     } catch (error: any) {
         console.error('Register Worker Error:', error);
-        res.status(500).json({success: false, message: 'Lỗi hệ thống', error: error.message});
+
+        // Xử lý lỗi file system
+        if (error.code === 'ENOENT' || error.code === 'EACCES') {
+            return res.status(500).json({
+                success: false,
+                message: 'Lỗi hệ thống lưu trữ file',
+                error: error.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi hệ thống',
+            error: error.message
+        });
     }
 };
+// export const registerWorker = async (req: RequestWithToken, res: Response) => {
+//     try {
+//
+//         const workerId = req.adminId;
+//
+//         if (!workerId) {
+//             return res.status(401).json({success: false, message: 'Unauthorized: Missing worker ID'});
+//         }
+//
+//         const {fullName, phoneNumber, cccdNumber, gender, yob} = req.body;
+//
+//         // Lấy file từ Multer
+//         // req.files trả về object dictionary vì dùng upload.fields
+//         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+//
+//         // Helper upload
+//         const uploadFile = async (field: string) => {
+//             if (files[field] && files[field][0]) {
+//                 return await uploadToCloudinary(files[field][0].buffer, 'miniapp/workers/cccd');
+//             }
+//             return null;
+//         };
+//
+//         // Upload song song cho nhanh
+//         const [cccdFrontUrl, cccdBackUrl, avatarFaceUrl] = await Promise.all([uploadFile('cccdFront'), uploadFile('cccdBack'), uploadFile('avatarFace')]);
+//
+//
+//         // Insert vào DB
+//
+//         const updateWorker = await db.update(usersWorker).set({
+//             fullName: fullName,
+//             phoneNumber: phoneNumber,
+//
+//             // Thông tin CCCD
+//             cccdNumber: cccdNumber,
+//             cccdFrontUrl: cccdFrontUrl || '',
+//             cccdBackUrl: cccdBackUrl || '',
+//             avatarFaceUrl: avatarFaceUrl || '',
+//
+//             status: 'active',
+//             verifyStatus: 'approved'
+//         }).where(eq(usersWorker.id, workerId)).returning();
+//
+//
+//         res.status(201).json({
+//             success: true, message: 'Update Success.', data: updateWorker
+//         });
+//
+//     } catch (error: any) {
+//         console.error('Register Worker Error:', error);
+//         res.status(500).json({success: false, message: 'Lỗi hệ thống', error: error.message});
+//     }
+// };
 
 
 export const getWorkerProfile = async (req: RequestWithToken, res: Response) => {
