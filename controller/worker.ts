@@ -60,7 +60,7 @@ export const loginZalo = async (req: Request, res: Response) => {
 }
 export const registerWorker = async (req: RequestWithToken, res: Response) => {
     try {
-        const workerId = req.adminId;
+        const workerId = 1;
 
         if (!workerId) {
             return res.status(401).json({success: false, message: 'Unauthorized: Missing worker ID'});

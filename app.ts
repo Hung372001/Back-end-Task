@@ -9,6 +9,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import {swaggerSpec} from "./utils/swagger";
 import routerWorker from "./router/worker";
+import path from "path";
 
 const  app = express();
 app.use(cors())
@@ -20,6 +21,7 @@ app.use('/api/customer', customer);
 app.use('/api/admin', routerSetting);
 app.use('/api/jobs', routerJob);
 app.use('/api/worker', routerWorker)
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
