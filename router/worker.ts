@@ -290,7 +290,7 @@ router.get('/my-jobs',requestLogger,extractTokenMiddleware, getJobs);
  *       400:
  *         description: Sai vị trí quá 150m hoặc lỗi khác
  */
-router.post('/jobs/:id/arrive', uploadPhoto, actionController.arrive);
+router.post('/jobs/:id/arrive',requestLogger ,extractTokenMiddleware,uploadPhoto, actionController.arrive);
 
 /**
  * @swagger
@@ -308,7 +308,7 @@ router.post('/jobs/:id/arrive', uploadPhoto, actionController.arrive);
  *       200:
  *         description: Trạng thái chuyển sang In Progress
  */
-router.post('/jobs/:id/start', actionController.start);
+router.post('/jobs/:id/start',requestLogger ,extractTokenMiddleware,uploadPhoto, actionController.start);
 
 /**
  * @swagger
@@ -338,6 +338,6 @@ router.post('/jobs/:id/start', actionController.start);
  *       200:
  *         description: Hoàn thành. Nếu tất cả thợ xong, Job sẽ Completed.
  */
-router.post('/jobs/:id/complete', uploadPhoto, actionController.complete);
+router.post('/jobs/:id/complete',requestLogger,extractTokenMiddleware    ,uploadPhoto, actionController.complete);
 
 export default router;
